@@ -406,14 +406,7 @@
             try {
                 const res = await fetch("/predict", { method: "POST", body: formData });
                 const data = await res.json();
-                const score = parseFloat(data.confidence);
-
-                if (score < 90) { // If the AI is less than 50% sure
-                    document.getElementById('skinTypeDisplay').innerText = "Invalid Scan";
-                    document.getElementById('statusText').innerText = "Please align your face in the frame";
-                    document.getElementById('productsList').innerHTML = "<li>No face detected.</li>";
-                    return; // Stop here
-                }
+                
 
                 // 3. If the score is GOOD, Display AI Results
                 document.getElementById('skinTypeDisplay').innerText = data.skin_type;
