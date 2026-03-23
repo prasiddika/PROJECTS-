@@ -1,139 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkinSense AI | Professional Glow</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Quicksand:wght@500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <style>
         :root {
             --primary: #ff8fa3;
             --primary-dark: #ff4d6d;
             --glass: rgba(255, 255, 255, 0.85);
-            --text: #4a4a4a;
             --accent-green: #00e676;
+            --text-main: #333;
+            --text-sub: #666;
+            --divider: #eee;
         }
 
-        /* 1. AESTHETIC BACKGROUND */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            min-height: 100vh;
+            background: #fff5f7;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #fff5f7;
-            overflow-x: hidden;
-        }
-
-        .aura-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-        }
-
-        .aura {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.5;
-            animation: move 15s infinite alternate ease-in-out;
-        }
-
-        .aura-1 { width: 500px; height: 500px; background: #ffd1dc; top: -10%; left: -10%; }
-        .aura-2 { width: 400px; height: 400px; background: #c3bef0; bottom: -10%; right: -10%; animation-delay: -7s; }
-
-        @keyframes move {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 100px); }
-        }
-
-        /* 2. CONTAINER & LAYOUT */
-        .main-container {
-            width: 95%;
-            max-width: 900px;
-            text-align: center;
-            z-index: 10;
-        }
-
-        header h1 {
-            font-family: 'Quicksand', sans-serif;
-            font-size: 2.8rem;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        header h1 span { color: var(--primary-dark); }
-
-        header p {
-            color: #888;
-            margin-bottom: 30px;
-            font-weight: 300;
+            min-height: 100vh;
+            color: var(--text-main);
         }
 
         .glass-card {
             background: var(--glass);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
             border-radius: 40px;
             padding: 40px;
+            width: 95%;
+            max-width: 900px;
             box-shadow: 0 20px 60px rgba(255, 77, 109, 0.15);
-            min-height: 450px;
-            transition: all 0.5s ease;
         }
 
-        /* 3. UPLOAD PORTAL */
-        .upload-view {
-            display: block;
-            animation: fadeIn 0.5s ease;
+        /* Essential utility for state switching */
+        .hidden {
+            display: none !important;
         }
 
-        .drop-zone {
-            border: 3px dashed #ffcad4;
-            border-radius: 35px;
-            padding: 80px 20px;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .drop-zone:hover {
-            border-color: var(--primary);
-            background: white;
-            transform: scale(1.01);
-        }
-
-        .drop-zone input {
-            position: absolute; width: 100%; height: 100%;
-            top: 0; left: 0; opacity: 0; cursor: pointer;
-        }
-
-        .icon-circle {
-            width: 80px; height: 80px;
-            background: #fff0f3;
-            color: var(--primary-dark);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2rem;
-            box-shadow: 0 10px 20px rgba(255, 77, 109, 0.1);
-        }
-
-        /* 4. SIDE-BY-SIDE RESULT VIEW */
-        .result-view {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .result-view.active {
-            display: block;
-            opacity: 1;
-        }
-
+        /* Reusable Side-by-Side Flex Layout */
         .side-by-side {
             display: flex;
             gap: 40px;
@@ -141,262 +55,391 @@
             text-align: left;
         }
 
-        .image-panel {
+        .left-panel {
             flex: 1;
-            position: relative;
+            min-width: 300px;
         }
 
+        .right-panel {
+            flex: 1.2;
+            min-width: 300px;
+        }
+
+        /* Header Styling */
+        header h1 {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 2.8rem;
+            margin: 0 0 10px 0;
+        }
+
+        header p {
+            color: var(--text-sub);
+            margin: 0 0 30px 0;
+            font-size: 1rem;
+        }
+
+        /* Image Styling */
         .image-frame {
-            border-radius: 30px;
+            border-radius: 25px;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            line-height: 0;
-            background: #fff;
             position: relative;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            line-height: 0;
+            /* Fixes tiny gap below video/image */
         }
 
+        #webcam,
         #previewImg {
             width: 100%;
-            height: auto;
+            display: block;
             object-fit: cover;
+            aspect-ratio: 4/5;
         }
 
+        /* Scanning Animation */
         .scan-line {
             display: none;
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 4px;
+            width: 100%;
+            height: 5px;
             background: var(--primary-dark);
             box-shadow: 0 0 15px var(--primary-dark);
-            z-index: 5;
+            z-index: 10;
             animation: scan 2s infinite linear;
         }
 
         @keyframes scan {
-            0% { top: 0%; } 100% { top: 100%; }
+            0% {
+                top: 0%;
+            }
+
+            100% {
+                top: 100%;
+            }
         }
 
-        .data-panel {
-            flex: 1.2;
+        /* General Button Styling */
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 20px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            margin-top: 20px;
+        }
+
+        .reset-btn {
+            background: white;
+            border: 1px solid #ddd;
+            color: var(--text-main);
+            margin-top: 20px;
+        }
+
+        .reset-btn:hover {
+            background: #fafafa;
+            border-color: #ccc;
+        }
+
+        /* Divider */
+        .divider-container {
+            margin: 25px 0;
+            color: #bbb;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* DropZone Styling */
+        .drop-zone {
+            border: 2px dashed #ffcad4;
+            padding: 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-sub);
+        }
+
+        .drop-zone:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: var(--primary);
+        }
+
+        /* Status Dot Styling */
         .status-badge {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 8px;
-            background: white;
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #666;
-            text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            font-size: 0.85rem;
+            color: var(--text-sub);
         }
 
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; }
-        .dot.active { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: background 0.3s;
+        }
 
+        .dot.active {
+            background: var(--accent-green) !important;
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Results Display */
         #skinTypeDisplay {
             font-size: 2.5rem;
-            margin: 15px 0;
-            color: #333;
+            margin: 10px 0;
             font-weight: 700;
+            color: var(--text-main);
         }
 
-        .divider { height: 2px; background: rgba(0,0,0,0.05); margin: 20px 0; }
+        #confidenceScore {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 1rem;
+        }
 
         .product-list {
             list-style: none;
             padding: 0;
-            margin-bottom: 30px;
+            color: #555;
         }
 
         .product-list li {
-            margin: 12px 0;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
-            gap: 12px;
-            color: #555;
-            font-size: 0.95rem;
+            gap: 10px;
         }
 
-        .product-list li i { color: var(--accent-green); }
-
-        /* 5. BUTTONS */
-        .analyze-btn {
-            width: 100%;
-            padding: 20px;
-            border: none;
-            border-radius: 22px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(255, 77, 109, 0.3);
-            display: flex; justify-content: center; align-items: center; gap: 12px;
-            transition: 0.3s;
+        .product-list li i {
+            color: var(--accent-green);
         }
 
-        .analyze-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 77, 109, 0.4); }
-        .analyze-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        .reset-btn {
-            background: none;
-            border: none;
-            color: var(--primary-dark);
-            margin-top: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex; align-items: center; gap: 8px;
-            opacity: 0.7;
-            transition: 0.3s;
-            width: 100%;
-            justify-content: center;
+        hr {
+            border: 0;
+            border-top: 1px solid var(--divider);
+            margin: 20px 0;
         }
 
-        .reset-btn:hover { opacity: 1; transform: translateX(-5px); }
-
-        .hidden { display: none !important; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Mobile Responsive */
+        /* Mobile Responsiveness */
         @media (max-width: 700px) {
-            .side-by-side { flex-direction: column; text-align: center; }
-            .data-panel { width: 100%; }
+            .side-by-side {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+
+            .left-panel,
+            .right-panel {
+                width: 100%;
+                min-width: 0;
+            }
+
+            #skinTypeDisplay {
+                font-size: 2rem;
+            }
+
+            header h1 {
+                font-size: 2.2rem;
+            }
         }
     </style>
 </head>
+
 <body>
-
-    <div class="aura-bg">
-        <div class="aura aura-1"></div>
-        <div class="aura aura-2"></div>
-    </div>
-
     <div class="main-container">
-        <header>
-            <h1>SkinSense <span>AI</span></h1>
-            <p>Advanced Deep-Learning for Beautiful Skin</p>
-        </header>
-
         <div class="glass-card">
-            <div id="uploadView" class="upload-view">
-                <div class="drop-zone" id="dropZone">
-                    <div class="icon-circle">
-                        <i class="fas fa-camera"></i>
+
+            <div id="uploadView">
+                <header>
+                    <h1>SkinSense <span style="color: var(--primary-dark);">AI</span></h1>
+                    <p>Capture or upload a photo to begin</p>
+                </header>
+
+                <div class="side-by-side">
+                    <div class="left-panel">
+                        <div class="image-frame">
+                            <video id="webcam" autoplay playsinline></video>
+                            <canvas id="captureCanvas" style="display:none;"></canvas>
+                        </div>
                     </div>
-                    <h3>Start Your Analysis</h3>
-                    <p>Select or drag a photo of your face here</p>
-                    <input type="file" id="imageInput" accept="image/*">
+
+                    <div class="right-panel">
+                        <button id="captureBtn" class="btn analyze-btn">
+                            <i class="fas fa-camera"></i> Capture & Analyze Live
+                        </button>
+
+                        <div class="divider-container">— OR —</div>
+
+                        <div id="dropZone" class="drop-zone">
+                            <input type="file" id="imageInput" accept="image/*" style="display:none;">
+                            <p onclick="document.getElementById('imageInput').click()" style="margin:0;">
+                                <i class="fas fa-cloud-upload-alt" style="margin-right:8px;"></i> Select from Gallery
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div id="resultView" class="result-view">
+            <div id="resultView" class="hidden">
                 <div class="side-by-side">
-                    <div class="image-panel">
+                    <div class="left-panel">
                         <div class="image-frame">
-                            <img id="previewImg" src="" alt="User Skin">
+                            <img id="previewImg" src="">
                             <div id="scanLine" class="scan-line"></div>
                         </div>
                     </div>
 
-                    <div class="data-panel">
+                    <div class="right-panel">
                         <div class="status-badge">
                             <span id="statusDot" class="dot"></span>
-                            <span id="statusText">Image Ready</span>
+                            <span id="statusText">Ready</span>
                         </div>
-                        
                         <h2 id="skinTypeDisplay">Analysis Ready</h2>
-                        <div class="divider"></div>
-                        
-                        <ul id="productsList" class="product-list">
-                            <li><i class="fas fa-info-circle" style="color:#ddd"></i> Tap analyze to identify skin type</li>
-                        </ul>
+                        <p id="confidenceScore"></p>
+                        <hr>
 
-                        <button id="analyzeBtn" class="analyze-btn">
-                            <span>Analyze Skin Now</span>
-                            <i class="fas fa-wand-sparkles"></i>
-                        </button>
+                        <h4 style="margin-bottom: 10px; color: #444;">Recommended Care:</h4>
+                        <ul id="productsList" class="product-list"></ul>
 
-                        <button id="resetBtn" class="reset-btn">
+                        <button id="resetBtn" class="btn reset-btn">
                             <i class="fas fa-arrow-left"></i> Analyze another photo
                         </button>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
     <script>
-        const imageInput = document.getElementById('imageInput');
+        const video = document.getElementById('webcam');
         const uploadView = document.getElementById('uploadView');
         const resultView = document.getElementById('resultView');
         const previewImg = document.getElementById('previewImg');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const resetBtn = document.getElementById('resetBtn');
         const scanLine = document.getElementById('scanLine');
-        const statusText = document.getElementById('statusText');
         const statusDot = document.getElementById('statusDot');
 
-        // 1. Instant Preview Logic
-        imageInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    uploadView.classList.add('hidden');
-                    resultView.classList.add('active');
-                    
-                    // Reset UI for the new image
-                    document.getElementById('skinTypeDisplay').innerText = "Ready to Scan";
-                    statusText.innerText = "Image Ready";
-                    statusDot.classList.remove('active');
-                }
-                reader.readAsDataURL(this.files[0]);
+        // Start Camera Stream
+        window.addEventListener('load', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Camera access denied or not found.");
             }
         });
 
-        // 2. Analysis Logic
-        analyzeBtn.addEventListener('click', async () => {
-            statusText.innerText = "Analyzing Texture...";
+        // Capture from Webcam
+        document.getElementById('captureBtn').addEventListener('click', () => {
+            const canvas = document.getElementById('captureCanvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob(blob => {
+                const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+                processAndAnalyze(file);
+            }, 'image/jpeg');
+        });
+
+        // Handle File Upload
+        document.getElementById('imageInput').addEventListener('change', function () {
+            if (this.files[0]) processAndAnalyze(this.files[0]);
+        });
+
+        // Core Processing Logic
+        async function processAndAnalyze(file) {
+            // 1. Swap Views
+            uploadView.classList.add('hidden');
+            resultView.classList.remove('hidden');
+
+            // 2. Setup Loading State
+            previewImg.src = URL.createObjectURL(file);
             scanLine.style.display = 'block';
-            analyzeBtn.disabled = true;
+            statusDot.classList.add('active');
+            document.getElementById('statusText').innerText = "Analyzing Texture...";
+            document.getElementById('skinTypeDisplay').innerText = "Analyzing...";
 
             const formData = new FormData();
-            formData.append('image', imageInput.files[0]);
+            formData.append('image', file);
 
             try {
-                const response = await fetch("/predict", { method: "POST", body: formData });
-                const result = await response.json();
+                const res = await fetch("/predict", { method: "POST", body: formData });
+                const data = await res.json();
+                const score = parseFloat(data.confidence);
 
-                // Update Results
-                document.getElementById('skinTypeDisplay').innerText = result.skin_type;
-                document.getElementById('productsList').innerHTML = result.products.map(p => 
+                if (score < 90) { // If the AI is less than 50% sure
+                    document.getElementById('skinTypeDisplay').innerText = "Invalid Scan";
+                    document.getElementById('statusText').innerText = "Please align your face in the frame";
+                    document.getElementById('productsList').innerHTML = "<li>No face detected.</li>";
+                    return; // Stop here
+                }
+
+                // 3. If the score is GOOD, Display AI Results
+                document.getElementById('skinTypeDisplay').innerText = data.skin_type;
+                document.getElementById('confidenceScore').innerText = `Confidence: ${data.confidence}`;
+
+                // Generate list items
+                document.getElementById('productsList').innerHTML = data.products.map(p =>
                     `<li><i class="fas fa-check-circle"></i> ${p}</li>`
                 ).join('');
 
-                statusText.innerText = "Analysis Complete";
-                statusDot.classList.add('active');
-            } catch (err) {
-                statusText.innerText = "Connection Error";
-                console.error(err);
-            } finally {
-                scanLine.style.display = 'none';
-                analyzeBtn.disabled = false;
-            }
-        });
+                document.getElementById('statusText').innerText = "Analysis Complete";
 
-        // 3. Reset/Add Another Photo Logic
-        resetBtn.addEventListener('click', () => {
-            imageInput.value = "";
-            resultView.classList.remove('active');
-            uploadView.classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('statusText').innerText = "Connection Error";
+                document.getElementById('skinTypeDisplay').innerText = "Error";
+            } finally {
+                scanLine.style.display = 'none'; // Stop the "Laser"
+            }
+        }
+
+        // Reset Button
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            location.reload(); // Refresh the page to reset the camera and state
         });
     </script>
 </body>
+
 </html>
