@@ -1,80 +1,135 @@
-# train_model.py
-
-# 1️⃣ Import necessary libraries
 import tensorflow as tf
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout, BatchNormalization
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
 import os
+import json
 
-# 2️⃣ Set paths to your dataset
+# -----------------------------
+# Paths and Config
+# -----------------------------
 train_dir = os.path.join("dataset", "train")
 valid_dir = os.path.join("dataset", "valid")
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 16  # Slightly larger batch for stability
 
-# 3️⃣ Image parameters
-IMG_SIZE = (224, 224)  # MobileNetV2 expects 224x224 images
-BATCH_SIZE = 8      # number of images processed at once
-
-# 4️⃣ Preprocessing for training and validation
+# -----------------------------
+# Enhanced Data Augmentation
+# -----------------------------
 train_datagen = ImageDataGenerator(
     preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input,
-    rotation_range=20,
-    zoom_range=0.2,
+    rotation_range=30,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.3,
     horizontal_flip=True,
+    fill_mode='nearest',
     brightness_range=[0.8, 1.2]
 )
-
-
 
 valid_datagen = ImageDataGenerator(
     preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input
 )
 
-# 5️⃣ Load images from folders
 train_data = train_datagen.flow_from_directory(
-    train_dir,
-    target_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    class_mode="categorical"  # 4 classes → one-hot encoded
+    train_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical"
 )
 
 valid_data = valid_datagen.flow_from_directory(
-    valid_dir,
-    target_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    class_mode="categorical"
+    valid_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical", shuffle=False
 )
 
-# 6️⃣ Build the model using MobileNetV2
-base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224,224,3))
-base_model.trainable = True
-for layer in base_model.layers[:-30]:  # keep first layers frozen
-    layer.trainable = False
+# Save class names for the Flask app
+class_names = list(train_data.class_indices.keys())
+os.makedirs("model", exist_ok=True)
+with open("model/classes.json", "w") as f:
+    json.dump(class_names, f)
 
+# -----------------------------
+# Model Architecture
+# -----------------------------
+base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+base_model.trainable = False # Start with base frozen
 
 model = Sequential([
     base_model,
-    GlobalAveragePooling2D(),  # converts feature maps to a single vector
-    Dense(128, activation="relu"),  # small dense layer to learn skin features
-    Dense(4, activation="softmax")   # 4 skin types
+    GlobalAveragePooling2D(),
+    BatchNormalization(),
+    Dense(256, activation="relu"),
+    Dropout(0.4),
+    Dense(len(class_names), activation="softmax")
 ])
 
-# 7️⃣ Compile the model
-model.compile(
-    optimizer="adam",
-    loss="categorical_crossentropy",
-    metrics=["accuracy"]
+# -----------------------------
+# Training Strategy: Phase 1 (Warmup)
+# -----------------------------
+model.compile(optimizer=Adam(learning_rate=0.001), loss="categorical_crossentropy", metrics=["accuracy"])
+
+print("Phase 1: Training top layers...")
+history_warmup = model.fit(train_data, validation_data=valid_data, epochs=5)
+
+# -----------------------------
+# Training Strategy: Phase 2 (Fine-Tuning)
+# -----------------------------
+print("Phase 2: Fine-tuning base model...")
+base_model.trainable = True
+# Freeze early layers, unfreeze late layers
+for layer in base_model.layers[:-50]:
+    layer.trainable = False
+
+# Lower learning rate is CRITICAL for fine-tuning
+model.compile(optimizer=Adam(learning_rate=0.00001), loss="categorical_crossentropy", metrics=["accuracy"])
+
+callbacks = [
+    EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True),
+    ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=1e-7)
+]
+
+history_fine = model.fit(
+    train_data, 
+    validation_data=valid_data, 
+    epochs=25, 
+    callbacks=callbacks
 )
 
-# 8️⃣ Train the model
-EPOCHS = 12  # more epoch for better learning 
-history = model.fit(train_data, validation_data=valid_data, epochs=EPOCHS)
-print("Final training accuracy:", history.history["accuracy"][-1])
-print("Final validation accuracy:", history.history["val_accuracy"][-1])
+# -----------------------------
+# Visualization (Accuracy & Loss Curves)
+# -----------------------------
+def plot_history(h1, h2):
+    acc = h1.history['accuracy'] + h2.history['accuracy']
+    val_acc = h1.history['val_accuracy'] + h2.history['val_accuracy']
+    loss = h1.history['loss'] + h2.history['loss']
+    val_loss = h1.history['val_loss'] + h2.history['val_loss']
 
+    plt.figure(figsize=(12, 5))
+    
+    # Accuracy Plot
+    plt.subplot(1, 2, 1)
+    plt.plot(acc, label='Training Accuracy')
+    plt.plot(val_acc, label='Validation Accuracy')
+    plt.title('Accuracy Curves')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
 
-# 9️⃣ Save the trained model
-os.makedirs("model", exist_ok=True)  # create model folder if it doesn't exist
-model.save("model/skin_model.h5")
-print("Training complete! Model saved as model/skin_model.h5")
+    # Loss Plot
+    plt.subplot(1, 2, 2)
+    plt.plot(loss, label='Training Loss')
+    plt.plot(val_loss, label='Validation Loss')
+    plt.title('Loss Curves')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    plt.savefig('model/training_curves.png')
+    plt.show()
+
+plot_history(history_warmup, history_fine)
+
+model.save("model/skin_model.keras")
+print("Training complete! Curves saved to model/training_curves.png")
